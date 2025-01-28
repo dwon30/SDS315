@@ -1,0 +1,233 @@
+---
+title: "Homework2"
+author: "Donghwan Won"
+EID: "dw34446"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: default
+  html_document: default
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(ggplot2)
+library(dplyr)
+
+pro <- read.csv('C:/Users/namyu/OneDrive/바탕 화면/SDS315/HW2/profs.csv')
+bike <- read.csv('C:/Users/namyu/OneDrive/바탕 화면/SDS315/HW2/bikeshare.csv')
+capmetro_UT <- read.csv('C:/Users/namyu/OneDrive/바탕 화면/SDS315/HW2/capmetro_UT.csv')
+billboard <- read.csv('C:/Users/namyu/OneDrive/바탕 화면/SDS315/HW2/billboard.csv')
+
+```
+
+## 1. Part A
+
+
+```{r cars}
+ggplot(pro) +
+geom_histogram(aes(x=eval)) +
+labs(
+  title = "Data distribution of score evaluation",
+  y = "Frequency", x = "Course Evaluation")
+mean(pro$eval)
+sd(pro$eval)
+
+```
+This histogram shows this is a skewed left graph. X-axis is course evaluation and it is out of 5. Y-axis represents frequency of course evaluation. Mean Course evaluation is 3.99 and standard deviation of course evaluation is 0.55.
+
+## 1. Part B
+```{r}
+ggplot(pro) + 
+  geom_boxplot(aes(x = native, y = eval)) +
+  labs(
+  title = "Course evaluation scores by whether or not the professor is a native English speaker",
+  y = "Course evaluation scores", x = "Native English Speaker")
+```
+There are two boxplots: one for "Yes" (Native English speakers) and one for "No" (Non-Native English speakers). The X-axis represents whether professors are Native English speakers, while the Y-axis represents course evaluation scores. The "Yes" boxplot (Native English speakers) shows higher values for the median, Q1, and Q3 compared to the "No" boxplot (Non-Native English speakers). Additionally, the "Yes" boxplot contains five outliers, whereas the "No" boxplot has no outliers.
+
+## 1. Part C
+```{r}
+ ggplot(pro) + 
+  geom_histogram(aes(x=eval), binwidth=3) + 
+  facet_wrap(~gender) +
+  labs(
+  title = "Distribution of course evaluation scores for male and female instructors",
+  y = "Frequency", x = "Evaluation Scores")
+
+means <- pro %>%
+  group_by(gender) %>%
+  summarise(mean_eval = mean(eval))
+
+
+sds <- pro %>%
+  group_by(gender) %>%
+  summarise(sd_eval = sd(eval))
+
+
+```
+By looking at the two different histograms, it is evident that there are more male instructors than female instructors, as the male instructors have higher frequencies. The mean evaluation score for male instructors is 4.069, while for female instructors it is 3.901. The standard deviation of evaluation scores is 0.557 for males and 0.539 for females. This indicates that male instructors have both a higher mean evaluation score and greater variability in their scores compared to female instructors.
+
+## 1. Part D
+```{r}
+ggplot(pro) + 
+  geom_point(aes(x=beauty, y=eval)) +
+  labs(
+  title = "Association between the professor’s physical attractiveness and their course evaluations",
+  y = "Course evaluation scores", x = "Professor's physical attractiveness")
+
+cor(pro$beauty, pro$eval)
+```
+The X-axis represents the professor's physical attractiveness, where 0 indicates average attractiveness, numbers above 0 indicate above-average attractiveness, and numbers below 0 indicate below-average attractiveness. The Y-axis represents course evaluation scores. The correlation between a professor's physical attractiveness and their course evaluation scores is 0.189, indicating a weak relationship between the two variables. This is supported by the scatterplot, where the points are widely scattered.It is visually clear that there is no strong relationship between physical attractiveness and course evaluation scores.
+
+## 2. Part A
+```{r}
+
+average_hourly_rentals <- bike %>%
+  group_by(hr) %>%
+  summarize(avg_total = mean(total))
+
+ggplot(average_hourly_rentals) + 
+  geom_line(aes(y=avg_total, x=hr)) +
+  labs(
+  title = " Relationship between Average hourly bike rentals across all hours of the day",
+  y = "Average hourly bike rentals", x = "Hours")
+
+
+```
+X-axis represents all hours of day and unit is in hours. Y-axis is average hourly bike rentals. This represents count of total bike rentals that hour in average including both casual and registered users. Unit is in dollars. At hour 0, the bike rental revenue is around 50 dollars, and it decreases until hour 4. After that, it increases steadily until hour 8, followed by a slight decline around hour 10. From hour 10, the revenue continues to rise, peaking at hour 17(5PM), which has the highest hourly bike rental revenue, exceeding 400 dollars. After hour 17(5PM), the revenue gradually decreases.
+
+
+
+
+## 2. Part B
+```{r}
+average_hourly_r <- bike %>%
+  group_by(hr, workingday) %>%
+  summarize(avg_total = mean(total))
+
+ggplot(average_hourly_r) + 
+  geom_line(aes(y=avg_total, x=hr)) + facet_wrap(~workingday) +
+  labs(
+  title = " Average bike rentals by hour of the day,",
+  y = "Average hourly bike rentals", x = "Hours")
+
+
+```
+X-axis represents all hours of day and unit is in hours. Y-axis is average hourly bike rentals. This represents count of total bike rentals that hour in average including both casual and registered users and unit is in dollars.The left graph represents graph 0, which corresponds to weekdays (working days), while the right graph represents graph 1, which corresponds to weekends or holidays. In graph 1 (weekends/holidays), average hourly bike rentals starts at around 100 dollars and decreases until hour 5. It then rises steadily until hour 13, after which it begins to decline again. In graph 0 (weekdays), the  average hourly bike rentals starts at around 50 dollars at hour 0 and then increases sharply, reaching just over 450 dollars at hour 7. After this peak, the  average hourly bike rentals drops quickly until hour 10 and then starts to rise again. The highest point is at hour 18 (6 PM), where the revenue exceeds 500 dollars. Following this peak, the  average hourly bike rentals decreases.
+
+
+
+## 2. Part C
+```{r}
+rider_bike <- bike %>%
+  filter(hr == 9) %>%  
+  group_by(weathersit, workingday) %>% 
+  summarize(avg_rider = mean(total, na.rm = TRUE), .groups = "drop")
+
+ggplot(rider_bike, aes(x = weathersit, y = avg_rider, fill = factor(weathersit))) +
+  geom_bar(stat = "identity", position = "dodge") + 
+  labs(
+    title = "Average Ridership at 9 AM by Weather Situation",
+    x = "Weather Situation",
+    y = "Average Ridership",
+    fill = "Weather Situation"
+  ) +
+  facet_wrap(~ workingday)
+```
+This average ridership at 9AM by weather situation. The left graph represents graph 0, which corresponds to weekdays (working days), while the right graph represents graph 1, which corresponds to weekends or holidays. X-axis represents weather situation. 1(Red graph) means it is clear, few clouds, and partly cloudy. 2(Green graph) means it is mist + cloudy, mist + broken clouds, mist + few clouds and mist. 3(blue graph) means it is light snow, light rain + thunderstorm + scattered clouds, and light rain + scattered clouds. Y represents average ridership and it is mean of total bike rentals at 9AM. It is in dollars. 
+
+## 3. Part A
+```{r}
+capmetro_UT = mutate(capmetro_UT,
+day_of_week = factor(day_of_week,
+levels=c("Mon", "Tue", "Wed","Thu", "Fri", "Sat", "Sun")),
+month = factor(month,
+levels=c("Sep", "Oct","Nov")))
+
+average_boardings <- capmetro_UT %>%
+  group_by(hour_of_day, day_of_week, month) %>%
+  summarize(avg_boarding = mean(boarding), .groups = "drop")
+
+ggplot(average_boardings) + 
+  geom_line(aes(x=hour_of_day, y=avg_boarding, color = month)) + 
+  facet_wrap(~day_of_week)  +
+  labs(
+  title = " Relationship between Average Boarding and hours of day",
+  y = "Average Boarding", x = "Hours of Day")
+
+```
+There are 7 different line graphs, each representing a day of the week. The X-axis shows the hours of the day from 6 AM to 10 PM, where 13 represents 1 PM, 14 represents 2 PM, and so on. The Y-axis represents the average number of boardings, broken down by hour of the day, day of the week, and month. Unit is how many people in average. Each graph contains three different lines: the red line represents September, the green line represents October, and the blue line represents November. The graphs for Monday, Tuesday, Wednesday, Thursday, and Friday all exhibit a similar pattern, with the highest average boardings occurring around hour 15 (3 PM).
+
+## 3. Part B
+```{r}
+ggplot(capmetro_UT) + 
+  geom_point(aes(x=temperature, y=boarding, 
+                 color = weekend)) + facet_wrap(~hour_of_day)  +
+  labs(
+  title = " Relationship between Boarding and Temperature",
+  y = "Boarding", x = "Temperature")
+
+
+```
+X-axis represents temperature in degree F and Y-axis represents boarding in person, with separate panels for different hours of the day. Data points are color-coded to distinguish between weekdays (red) and weekends (blue).
+From the figure, we observe that the number of boardings depending on the time of day, temperature does not appear to have a strong. Temperature spread out from around 40 degrees to 80 degrees in most of time. But boarding range is higher. It goes up as time goes up. Then it start to decrease again after hour 17(5PM).
+
+\newpage 
+
+## 4. Part A
+```{r}
+billboard %>%
+  group_by(performer, song) %>%
+  summarize(count = n(), .groups = "drop") %>%
+  arrange(desc(count)) %>%
+head(10)
+```
+There are three different columns which are performer, song and count. Count represents the
+number of weeks that song appeared in the Billboard Top 100. And table just shows top 10 popular songs since 1958. 
+
+## 4. Part B
+```{r}
+billboard_2 <- billboard %>%
+  filter(year != 1958 & 2017 ) %>%
+  group_by(year, performer, song) %>%
+  summarize(number_weeks = n() , .groups = "drop")
+
+
+billboard_3 <- billboard_2 %>%
+  group_by(year) %>%
+  summarize(number_year = n() ,.groups = "drop")
+
+ggplot(billboard_3) + 
+  geom_line(aes(x=year, y=number_year)) +   
+  labs(
+  title = " Relationship between number of unique songs and year",
+  y = "Number of Unique songs", x = "Year")
+  
+  
+
+```
+The X-axis represents the years from 1958 to 2021, while the Y-axis represents the number of unique songs that appeared at any position on the Billboard Top 100 chart in any week of that year. A few interesting trends can be observed. The number of unique songs steadily declined from around 1965 to the early 2000s. However, there is huge decrease after year 2020.
+
+## 4. Part C
+```{r}
+billboard_top_10 <-billboard %>%
+  group_by(performer, song) %>%
+  summarize(count = n(), .groups = "drop") %>%
+  arrange(desc(count)) %>%
+  filter(count >= 10) %>%
+  group_by(performer) %>%
+  summarize(ten_weeks_hit = n(), .groups = "drop") %>%
+  filter(ten_weeks_hit >= 30)
+
+ggplot(billboard_top_10) + 
+  geom_bar(aes(x=performer, y=ten_weeks_hit), stat = "identity") +
+    labs(
+  title = " Relationship between performer and frequency of ten weeks hit",
+  x = "Performer", y = "Frequency of ten weeks hit") +
+  coord_flip()
+
+
+```
+This graph shows how many time artists have songs that were in Billboard for at least 10 weeks. The Y-axis represents the frequency of such hits, meaning the number of individual songs that stayed on the chart for at least 10 weeks. The X-axis displays the 19 performers in U.S. music history since 1958 who have had at least 30 songs achieve this milestone. As shown, Elton John has the most songs that remained on the Billboard Top 100 for 10 weeks.
+
